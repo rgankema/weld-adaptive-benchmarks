@@ -1,0 +1,10 @@
+{
+    "num_rows": 1000000,
+    "sf": [1, 10],
+    "num_iterations": 5,
+    "s_hit": [0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.49, 0.5, 0.75, 1.0],
+    "t_hit": 0.55,
+    "u_hit": 0.55,
+    "type": ["Normal", "Adaptive", "Lazy"],
+    "num_threads": [1, 16]
+}
