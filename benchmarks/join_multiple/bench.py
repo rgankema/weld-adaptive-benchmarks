@@ -13,6 +13,7 @@ import sys
 import json
 from timeit import default_timer as timer
 from pprint import pprint
+import argparse
 
 # Create data
 def generate_data(n_R, hit_S, hit_T, hit_U):
@@ -89,7 +90,7 @@ def args_factory(encoded):
     return Args 
 
 # Join the tables using Weld
-def join_weld(values, adaptive, lazy, threads):
+def join_weld(values, adaptive, lazy, threads, weld_conf):
     weld_code = None
     with open('join.weld', 'r') as content_file:
         weld_code = content_file.read()
@@ -113,6 +114,10 @@ def join_weld(values, adaptive, lazy, threads):
     conf.set("weld.optimization.applyExperimentalTransforms", "true" if adaptive else "false")
     conf.set("weld.adaptive.lazyCompilation", "true" if lazy else "false")
     conf.set("weld.threads", str(threads))
+    conf.set("weld.memory.limit", "10000000000")
+    if weld_conf is not None:
+        for key, val in weld_conf:
+            conf.set(key, val)
 
     comp_start = timer()
     module = cweld.WeldModule(weld_code, conf, err)
@@ -145,35 +150,52 @@ def join_weld(values, adaptive, lazy, threads):
 
     return (result, comp_time, exec_time)
 
-# Program
-with open('conf.json') as f:
-    conf = json.load(f)
+if __name__ == '__main__':
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Micro benchmark for adaptive joins"
+    )
+    parser.add_argument('-c', '--conf', type=str, required=True,
+                        help="Path to configuration file")
+    parser.add_argument('-o', '--output', type=str, required=True,
+                        help="Path to output file")
+    cmdline_args = parser.parse_args()
+    opt_dict = vars(cmdline_args)
+    conf_path = opt_dict['conf']
+    out_path = opt_dict['output']
 
-pprint(conf)
-num_rows = conf['num_rows']
-sfs = conf['sf']
-num_iters = conf['num_iterations']
-s_hits = conf['s_hit']
-t_hit = conf['t_hit']
-u_hit = conf['u_hit']
-types = conf['type']
-num_threads = conf['num_threads']
+    # Parse configuration file
+    with open(conf_path) as f:
+        conf = json.load(f)
+    num_rows = conf['num_rows']
+    sfs = conf['sf']
+    num_iters = conf['num_iterations']
+    s_hits = conf['s_hit']
+    t_hit = conf['t_hit']
+    u_hit = conf['u_hit']
+    types = conf['type']
+    num_threads = conf['num_threads']
+    weld_conf = conf.get('weld_conf')
 
-with open('results.csv', 'w') as f:
-    f.write('type,n_rows,sf,s_hit,t_hit,u_hit,threads,comp_time,exec_time\n')
-    for sf in sfs:
-        for s_hit in s_hits:
-            data = generate_data(num_rows * sf, s_hit, t_hit, u_hit)
-            for t in types:
-                adaptive = t == 'Adaptive' or t == 'Lazy'
-                lazy = t == 'Lazy'
-                for threads in num_threads:
-                    last_result = None
-                    print('%s, %d, %d, %f, %f, %f, %d' % (t, num_rows, sf, s_hit, t_hit, u_hit, threads))
-                    for i in range(num_iters):
-                        (result, comp_time, exec_time) = join_weld(data, adaptive, lazy, threads)
-                        assert(last_result == None or last_result == result)
-                        last_result = result
+    # Start benchmarking
+    total_iters = len(sfs) * len(s_hits) * len(num_threads)
+    iters = 1
+    with open(out_path, 'w') as f:
+        f.write('type,n_rows,sf,s_hit,t_hit,u_hit,threads,comp_time,exec_time\n')
+        for sf in sfs:
+            for s_hit in s_hits:
+                data = generate_data(num_rows * sf, s_hit, t_hit, u_hit)
+                for t in types:
+                    adaptive = t == 'Adaptive' or t == 'Lazy'
+                    lazy = t == 'Lazy'
+                    for threads in num_threads:
+                        last_result = None
+                        print('[%03d/%03d] %s, %d, %d, %.3f, %.3f, %.3f, %d' % (iters, total_iters, t, num_rows, sf, s_hit, t_hit, u_hit, threads))
+                        for i in range(num_iters):
+                            (result, comp_time, exec_time) = join_weld(data, adaptive, lazy, threads, weld_conf)
+                            assert(last_result == None or last_result == result)
+                            last_result = result
 
-                        row = '%s,%d,%d,%f,%f,%f,%d,%f,%f\n'  % (t, num_rows, sf, s_hit, t_hit, u_hit, threads, comp_time, exec_time)
-                        f.write(row)
+                            row = '%s,%d,%d,%f,%f,%f,%d,%f,%f\n'  % (t, num_rows, sf, s_hit, t_hit, u_hit, threads, comp_time, exec_time)
+                            f.write(row)
+                        iters += 1
