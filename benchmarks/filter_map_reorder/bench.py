@@ -30,6 +30,13 @@ def generate_static_cols(num_rows):
 
     return data
 
+# Returns an array of selectivity data 
+def selectivities(min, max, num_points):
+    arr = np.ones(10) - np.geomspace(0.01, 1, 10)
+    arr[0] = 1
+    arr = np.flip(arr, 0)
+    return arr
+
 # Create the args object for Weld
 def args_factory(encoded):
     class Args(ctypes.Structure):
@@ -38,9 +45,9 @@ def args_factory(encoded):
 
 # Perform the Weld operation
 def benchmark(data, type, threads, weld_conf):
-    adaptive = type == 'Adaptive' or type == 'Lazy'
-    lazy = type == 'Lazy'
-    code_path = 'predicate.weld' if type == 'Select' else 'branch.weld' if type == 'Branch' else 'adaptive.weld'
+    adaptive = type == 'Adaptive'
+    lazy = False
+    code_path = 'filter_then_map.weld' if type is not 'Map->Filter' else 'map_then_filter.weld'
 
     weld_code = None
     with open(code_path, 'r') as content_file:
@@ -66,7 +73,6 @@ def benchmark(data, type, threads, weld_conf):
     conf.set("weld.adaptive.lazyCompilation", "true" if lazy else "false")
     conf.set("weld.threads", str(threads))
     conf.set("weld.memory.limit", "20000000000")
-    conf.set("weld.optimization.passes", "unroll-static-loop,infer-size,adapt-reorder-filter-projection,short-circuit-booleans,predicate,vectorize,fix-iterate,adapt-bloomfilter,adaptive")
     if weld_conf is not None:
         for key, val in weld_conf.iteritems():
             conf.set(key, val)
@@ -105,7 +111,7 @@ def benchmark(data, type, threads, weld_conf):
 if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description="Micro benchmark for adaptive predication"
+        description="Micro benchmark for adaptive filter map ordering"
     )
     parser.add_argument('-c', '--conf', type=str, required=True,
                         help="Path to configuration file")
@@ -136,7 +142,7 @@ if __name__ == '__main__':
         f.write('type,n_rows,sf,selectivity,threads,comp_time,exec_time\n')
         for sf in sfs:
             data = generate_static_cols(num_rows * sf)
-            for select in np.linspace(min_select, max_select, num_points):
+            for select in selectivities(min_select, max_select, num_points):
                 data['in1'] = generate_select_col(num_rows * sf, select)
                 for th in num_threads:
                     for ty in types:
