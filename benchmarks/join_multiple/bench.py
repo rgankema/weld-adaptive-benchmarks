@@ -111,10 +111,10 @@ def join_weld(values, adaptive, lazy, threads, weld_conf):
     # Compile the module
     err = cweld.WeldError()
     conf = cweld.WeldConf()
-    conf.set("weld.optimization.applyExperimentalTransforms", "true" if adaptive else "false")
+    conf.set("weld.optimization.applyAdaptiveTransforms", "true" if adaptive else "false")
     conf.set("weld.adaptive.lazyCompilation", "true" if lazy else "false")
     conf.set("weld.threads", str(threads))
-    conf.set("weld.memory.limit", "10000000000")
+    conf.set("weld.memory.limit", "20000000000")
     if weld_conf is not None:
         for key, val in weld_conf:
             conf.set(key, val)
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     weld_conf = conf.get('weld_conf')
 
     # Start benchmarking
-    total_iters = len(sfs) * len(s_hits) * len(num_threads)
+    total_iters = len(sfs) * len(s_hits) * len(types) * len(num_threads)
     iters = 1
     with open(out_path, 'w') as f:
         f.write('type,n_rows,sf,s_hit,t_hit,u_hit,threads,comp_time,exec_time\n')

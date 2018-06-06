@@ -1,0 +1,14 @@
+|in1:vec[i64],in2:vec[i64],in3:vec[i64],in4:vec[i64],in5:vec[i64],in6:vec[i64]|
+    result(
+        for(
+            zip(in1,in2,in3,in4,in5,in6),
+            merger[i64,+],
+            |b,i,e|
+                @(predicate:false)
+                if(
+                    e.$0 == 42L,
+                    merge(b, e.$0+e.$1+e.$2+e.$3+e.$4+e.$5+e.$0*e.$1+e.$2*e.$3+e.$4*e.$5),
+                    b
+                )
+        )
+    )
