@@ -12,7 +12,7 @@ def get_dataframe(path):
     df = pd.read_csv(path)
 
     def normalize_total_time(group):
-        group['norm_total_time'] = group.exec_time + group.comp_time.mean()
+        group['norm_total_time'] = group.exec_time + group.comp_time.median()
         return group
 
     df['total_time'] = df.comp_time + df.exec_time
@@ -21,7 +21,7 @@ def get_dataframe(path):
     return df
 
 # Plot the results and save to PDF
-def plot(df, pp):
+def plot(df, pp, outliers=False):
     type_vals = df.type.unique()
     thread_vals = df.threads.unique()
     sf_vals = df.sf.unique()
@@ -32,8 +32,11 @@ def plot(df, pp):
 
     y = 0
     for sf in sf_vals:
-        # Ensure that each row shares the same y-axis
-        max_time = df.loc[df.sf == sf].norm_total_time.max()
+        # Set y-lim
+        if outliers:
+            max_time = df.loc[df.sf == sf].norm_total_time.max()
+        else:
+            max_time = df.loc[df.sf == sf].groupby(['type', 'threads', 'selectivity']).median().reset_index().norm_total_time.max()
         for x in range(w):
             axs[y,x].set_ylim([0, max_time * 1.05])
         x = 0
@@ -41,7 +44,7 @@ def plot(df, pp):
         for th in thread_vals:
             plots = []
             for ty in type_vals:
-                g = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf].groupby('selectivity').mean().reset_index()
+                g = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf].groupby('selectivity').median().reset_index()
                 z = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf]
 
                 plot = axs[y,x].errorbar(g.selectivity, g.norm_total_time)
@@ -61,17 +64,20 @@ def plot(df, pp):
 if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description="Micro benchmark for adaptive joins"
+        description="Micro benchmark for adaptive branchings vs predication"
     )
     parser.add_argument('-i', '--input', type=str, required=True,
                         help="Path to input file")
     parser.add_argument('-o', '--output', type=str, required=True,
                         help="Path to output file")
+    parser.add_argument('-s', '--show-outliers', required=False, action='store_true',
+                        help='Plot all outliers')
     cmdline_args = parser.parse_args()
     opt_dict = vars(cmdline_args)
     in_path = opt_dict['input']
     out_path = opt_dict['output']
+    show_outliers = opt_dict['show_outliers']
 
     pp = PdfPages(out_path)
     df = get_dataframe(in_path)
-    plot(df, pp)
+    plot(df, pp, show_outliers)

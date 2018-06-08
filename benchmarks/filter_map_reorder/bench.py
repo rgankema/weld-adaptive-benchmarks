@@ -16,8 +16,8 @@ import argparse
 
 # Create first column of data (only one that depends on selectivity)
 def generate_select_col(num_rows, selectivity):
-    hits = np.ones(int(selectivity * num_rows), dtype=np.int64) * 42
-    misses = np.ones(num_rows - len(hits), dtype=np.int64)
+    hits = np.ones(int(selectivity * num_rows), dtype=np.int32) * 42
+    misses = np.ones(num_rows - len(hits), dtype=np.int32)
     col = np.append(hits, misses)
     np.random.shuffle(col)
     return col
@@ -26,7 +26,7 @@ def generate_select_col(num_rows, selectivity):
 def generate_static_cols(num_rows):
     data = {}
     for i in range(2,7):
-        data['in%d' % i] = np.random.randint(0, 42, num_rows, dtype=np.int64)
+        data['in%d' % i] = np.random.randint(0, 42, num_rows, dtype=np.int32)
 
     return data
 

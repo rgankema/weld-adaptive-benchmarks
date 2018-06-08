@@ -1,4 +1,4 @@
-|in1:vec[i64],in2:vec[i64],in3:vec[i64],in4:vec[i64],in5:vec[i64],in6:vec[i64]|
+|in1:vec[i32],in2:vec[i32],in3:vec[i32],in4:vec[i32],in5:vec[i32],in6:vec[i32]|
 result(for(
     zip(
         in1, in2, in3, in4, in5, in6,
@@ -7,9 +7,9 @@ result(for(
             |e| {e.$0 * e.$1 * e.$2 * e.$3 * e.$4, e.$1 * e.$2 * e.$3 * e.$4 * e.$5, e.$0 * e.$5 + e.$1 * e.$4}
         )
     ),
-    appender[{i64,i64,i64}],
+    appender[{i32,i32,i32}],
     |b,i,e|
-        if (e.$0 == 42L,
+        if (e.$0 == 42,
             merge(b, e.$6),
             b
         )

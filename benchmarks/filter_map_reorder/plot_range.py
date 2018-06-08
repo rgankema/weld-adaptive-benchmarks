@@ -12,7 +12,7 @@ def get_dataframe(path):
     df = pd.read_csv(path)
 
     def normalize_total_time(group):
-        group['norm_total_time'] = group.exec_time + group.comp_time.mean()
+        group['norm_total_time'] = group.exec_time + group.comp_time.median()
         return group
 
     df['total_time'] = df.comp_time + df.exec_time
@@ -41,7 +41,7 @@ def plot(df, pp):
         for th in thread_vals:
             plots = []
             for ty in type_vals:
-                g = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf].groupby('selectivity').mean().reset_index()
+                g = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf].groupby('selectivity').median().reset_index()
                 z = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf]
 
                 plot = axs[y,x].errorbar(g.selectivity, g.norm_total_time)
