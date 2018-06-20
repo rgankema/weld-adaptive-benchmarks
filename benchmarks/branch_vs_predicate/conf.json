@@ -6,7 +6,7 @@
     "max_select": 1.0,
     "num_points": 21,
     "type": ["Branch", "Select", "Adaptive"],
-    "num_threads": [1, 16],
+    "num_threads": [1, 8],
     "weld_conf": {
         "weld.compile.dumpCode": "false"
     }

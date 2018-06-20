@@ -40,7 +40,7 @@ def args_factory(encoded):
 def benchmark(data, type, threads, weld_conf):
     adaptive = type == 'Adaptive' or type == 'Lazy'
     lazy = type == 'Lazy'
-    code_path = 'predicate.weld' if type == 'Select' else 'branch.weld' if type == 'Branch' else 'adaptive.weld'
+    code_path = 'predicate.weld' if type == 'Select' else 'branch.weld'
 
     weld_code = None
     with open(code_path, 'r') as content_file:
@@ -66,7 +66,6 @@ def benchmark(data, type, threads, weld_conf):
     conf.set("weld.adaptive.lazyCompilation", "true" if lazy else "false")
     conf.set("weld.threads", str(threads))
     conf.set("weld.memory.limit", "20000000000")
-    conf.set("weld.optimization.passes", "unroll-static-loop,infer-size,adapt-reorder-filter-projection,short-circuit-booleans,predicate,vectorize,fix-iterate,adapt-bloomfilter,adaptive")
     if weld_conf is not None:
         for key, val in weld_conf.iteritems():
             conf.set(key, val)

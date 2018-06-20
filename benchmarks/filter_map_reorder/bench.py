@@ -32,7 +32,7 @@ def generate_static_cols(num_rows):
 
 # Returns an array of selectivity data 
 def selectivities(min, max, num_points):
-    arr = np.ones(10) - np.geomspace(0.01, 1, 10)
+    arr = np.ones(num_points) - np.geomspace(0.01, 1, num_points)
     arr[0] = 1
     arr = np.flip(arr, 0)
     return arr
@@ -47,7 +47,7 @@ def args_factory(encoded):
 def benchmark(data, type, threads, weld_conf):
     adaptive = type == 'Adaptive'
     lazy = False
-    code_path = 'filter_then_map.weld' if type is not 'Map->Filter' else 'map_then_filter.weld'
+    code_path = 'filter_then_map.weld' if type != 'Map->Filter' else 'map_then_filter.weld'
 
     weld_code = None
     with open(code_path, 'r') as content_file:
@@ -72,7 +72,9 @@ def benchmark(data, type, threads, weld_conf):
     conf.set("weld.optimization.applyAdaptiveTransforms", "true" if adaptive else "false")
     conf.set("weld.adaptive.lazyCompilation", "true" if lazy else "false")
     conf.set("weld.threads", str(threads))
-    conf.set("weld.memory.limit", "20000000000")
+    conf.set("weld.memory.limit", "30000000000")
+    if type == 'Map->Filter':
+        conf.set('weld.optimization.passes', 'unroll-static-loop,infer-size,adapt-reorder-filter-projection,adapt-bloomfilter,adapt-predicate,short-circuit-booleans,predicate,vectorize,fix-iterate')
     if weld_conf is not None:
         for key, val in weld_conf.iteritems():
             conf.set(key, val)
