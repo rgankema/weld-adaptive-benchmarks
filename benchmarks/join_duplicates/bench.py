@@ -63,7 +63,7 @@ def join_python(R_rk, R_sk, S_sk, S_tk, T_tk, T_uk, U_uk, U_val):
     for (uk, uval) in zip(U_uk, U_val):
         U_ht[uk] = uval
 
-    aggregate = 0
+    aggregate = int(0)
     s_hit = 0.0
     s_try = 0.0
     t_hit = 0.0
@@ -95,7 +95,7 @@ def join_python(R_rk, R_sk, S_sk, S_tk, T_tk, T_uk, U_uk, U_val):
     print("U hit ratio: " + (str(u_hit / u_try) if u_try > 0 else str(0)))
     print("Hits: " + str(hits))
 
-    return (aggregate, end - start)
+    return aggregate
 
 # Create the args object for Weld
 def args_factory(encoded):
@@ -105,6 +105,8 @@ def args_factory(encoded):
 
 # Join the tables using Weld
 def join_weld(values, adaptive, lazy, threads, weld_conf):
+    file_path = 'join.weld' if type is not 'Bloom Filter' else 'join_bf.weld'
+
     weld_code = None
     with open('join.weld', 'r') as content_file:
         weld_code = content_file.read()
@@ -130,7 +132,7 @@ def join_weld(values, adaptive, lazy, threads, weld_conf):
     conf.set("weld.threads", str(threads))
     conf.set("weld.memory.limit", "20000000000")
     if weld_conf is not None:
-        for key, val in weld_conf:
+        for key, val in weld_conf.iteritems():
             conf.set(key, val)
 
     comp_start = timer()
@@ -199,6 +201,7 @@ if __name__ == '__main__':
         for sf in sfs:
             for s_hit in s_hits:
                 data = generate_data(num_rows * sf, s_hit, t_hit, u_hit)
+                expect = join_python(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7])
                 for t in types:
                     adaptive = t == 'Adaptive' or t == 'Lazy'
                     lazy = t == 'Lazy'
@@ -207,7 +210,7 @@ if __name__ == '__main__':
                         print('[%03d/%03d] %s, %d, %d, %.3f, %.3f, %.3f, %d' % (iters, total_iters, t, num_rows, sf, s_hit, t_hit, u_hit, threads))
                         for i in range(num_iters):
                             (result, comp_time, exec_time) = join_weld(data, adaptive, lazy, threads, weld_conf)
-                            assert(last_result == None or last_result == result)
+                            assert(result == expect)
                             last_result = result
 
                             row = '%s,%d,%d,%f,%f,%f,%d,%f,%f\n'  % (t, num_rows, sf, s_hit, t_hit, u_hit, threads, comp_time, exec_time)
