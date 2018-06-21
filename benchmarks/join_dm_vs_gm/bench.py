@@ -103,10 +103,7 @@ def args_factory(encoded):
 
 # Join the tables using Weld
 def join_weld(values, ty, threads, weld_conf):
-    adaptive = ty == 'Adaptive' or ty == 'Lazy'
-    lazy = ty == 'lazy'
-    file_path = 'join_bf.weld' if ty == 'Bloom Filter' else 'join.weld'
-    
+    file_path = '%s.weld' % ty
     weld_code = None
     with open(file_path, 'r') as content_file:
         weld_code = content_file.read()
@@ -127,8 +124,8 @@ def join_weld(values, ty, threads, weld_conf):
     # Compile the module
     err = cweld.WeldError()
     conf = cweld.WeldConf()
-    conf.set("weld.optimization.applyAdaptiveTransforms", "true" if adaptive else "false")
-    conf.set("weld.adaptive.lazyCompilation", "true" if lazy else "false")
+    conf.set("weld.optimization.applyAdaptiveTransforms", "false")
+    conf.set("weld.adaptive.lazyCompilation", "false")
     conf.set("weld.threads", str(threads))
     conf.set("weld.memory.limit", "20000000000")
     if weld_conf is not None:

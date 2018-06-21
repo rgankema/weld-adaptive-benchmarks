@@ -1,0 +1,29 @@
+# SELECT SUM(a+b+c+d+z) 
+# FROM R,S,T,U 
+# WHERE R.a = S.a AND S.b = T.b AND t.c = U.d
+|R_rk:vec[i64],R_sk:vec[i64],S_sk:vec[i64],S_tk:vec[i64],T_tk:vec[i64],T_uk:vec[i64],U_uk:vec[i64],U_val:vec[i64]|
+
+let S_ht = result(for(zip(S_sk,S_tk), dictmerger[i64,i64,+], |b,i,e| merge(b,e)));
+let T_ht = result(for(zip(T_tk,T_uk), dictmerger[i64,i64,+], |b,i,e| merge(b,e)));
+let U_ht = result(for(zip(U_uk,U_val), dictmerger[i64,i64,+], |b,i,e| merge(b,e)));
+
+result(for(
+    zip(R_rk,R_sk),
+    merger[i64,+],
+    |b,i,r|
+        let rk = r.$0;
+        let sk = r.$1;
+        if (keyexists(S_ht, sk),
+            let tk = lookup(S_ht, sk);
+            if (keyexists(T_ht, tk),
+                let uk = lookup(T_ht, tk);
+                if (keyexists(U_ht, uk),
+                    let uval = lookup(U_ht, uk);
+                    merge(b, uval),
+                    b
+                ),
+                b
+            ),
+            b
+        )
+))
