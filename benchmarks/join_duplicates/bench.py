@@ -104,11 +104,13 @@ def args_factory(encoded):
     return Args 
 
 # Join the tables using Weld
-def join_weld(values, adaptive, lazy, threads, weld_conf):
-    file_path = 'join.weld' if type is not 'Bloom Filter' else 'join_bf.weld'
+def join_weld(values, ty, threads, weld_conf):
+    adaptive = ty == 'Adaptive' or ty == 'Lazy'
+    lazy = ty == 'lazy'
+    file_path = 'join_bf.weld' if ty is 'Bloom Filter' else 'join.weld'
 
     weld_code = None
-    with open('join.weld', 'r') as content_file:
+    with open(file_path, 'r') as content_file:
         weld_code = content_file.read()
 
     enc = NumpyArrayEncoder()
@@ -203,13 +205,11 @@ if __name__ == '__main__':
                 data = generate_data(num_rows * sf, s_hit, t_hit, u_hit)
                 expect = join_python(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7])
                 for t in types:
-                    adaptive = t == 'Adaptive' or t == 'Lazy'
-                    lazy = t == 'Lazy'
                     for threads in num_threads:
                         last_result = None
                         print('[%03d/%03d] %s, %d, %d, %.3f, %.3f, %.3f, %d' % (iters, total_iters, t, num_rows, sf, s_hit, t_hit, u_hit, threads))
                         for i in range(num_iters):
-                            (result, comp_time, exec_time) = join_weld(data, adaptive, lazy, threads, weld_conf)
+                            (result, comp_time, exec_time) = join_weld(data, t, threads, weld_conf)
                             assert(result == expect)
                             last_result = result
 
