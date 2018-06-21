@@ -107,8 +107,8 @@ def args_factory(encoded):
 def join_weld(values, ty, threads, weld_conf):
     adaptive = ty == 'Adaptive' or ty == 'Lazy'
     lazy = ty == 'lazy'
-    file_path = 'join_bf.weld' if ty is 'Bloom Filter' else 'join.weld'
-
+    file_path = 'join_bf.weld' if ty == 'Bloom Filter' else 'join.weld'
+    print ty, file_path
     weld_code = None
     with open(file_path, 'r') as content_file:
         weld_code = content_file.read()
