@@ -7,7 +7,7 @@ let S_ht = result(for(zip(S_sk,S_tk), dictmerger[i64,i64,+], |b,i,e| merge(b,e))
 let T_ht = result(for(zip(T_tk,T_uk), dictmerger[i64,i64,+], |b,i,e| merge(b,e)));
 let U_ht = result(for(zip(U_uk,U_val), dictmerger[i64,i64,+], |b,i,e| merge(b,e)));
 
-let S_ht_bf = result(for(S_k), bloombuilder[i64](len(S_k)), |b,i,e| merge(b,e));
+let S_ht_bf = result(for(S_sk, bloombuilder[i64](len(S_sk)), |b,i,e| merge(b,e)));
 
 result(for(
     zip(R_rk,R_sk),
