@@ -7,14 +7,6 @@ import argparse
 
 from matplotlib.backends.backend_pdf import PdfPages
 
-# Colors for representing types
-type_colors = {
-    'Normal': 'blue',
-    'Bloom Filter': 'green',
-    'Adaptive': 'orange',
-    'Lazy': 'red'
-}
-
 # Get a dataframe from CSV and preprocess it
 def get_dataframe(path):
     df = pd.read_csv(path)
@@ -32,36 +24,30 @@ def get_dataframe(path):
 def plot(df, pp):
     type_vals = df.type.unique()
     thread_vals = df.threads.unique()
-    sf_vals = df.sf.unique()
 
     w = len(thread_vals)
-    h = len(sf_vals)
-    fig, axs = plt.subplots(h, w, figsize=(16, 24))
+    h = 1
+    fig, axs = plt.subplots(h, w, figsize=(16, 8))
 
-    y = 0
-    for sf in sf_vals:
+   
+    x = 0
+    for th in thread_vals:
         # Ensure that each row shares the same y-axis
-        #max_time = df.loc[df.sf == sf].norm_total_time.max()
-        #for x in range(w):
-        #    axs[y,x].set_ylim([0, max_time * 1.05])
-        x = 0
+        max_time = df.exec_time.max()
 
-        for th in thread_vals:
-            plots = []
-            for ty in type_vals:
-                g = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf].groupby('s_hit').median().reset_index()
-                z = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf]
+        plots = []
+        for ty in type_vals:
+            g = df.loc[df.type == ty].loc[df.threads == th].groupby('s_hit').median().reset_index()
+            z = df.loc[df.type == ty].loc[df.threads == th]
 
-                plot = axs[y,x].errorbar(g.s_hit, g.norm_total_time, c=type_colors[ty])
-                axs[y,x].scatter(z.s_hit, z.norm_total_time, s=3, c=type_colors[ty])
-                plots.append(plot)
+            plot = axs[x].errorbar(g.s_hit, g.exec_time)
+            axs[x].scatter(z.s_hit, z.exec_time, s=3)
+            axs[x].set_ylim([0, max_time * 1.05])
+            plots.append(plot)
 
-            axs[y,x].set_title('sf=%d, threads=%d' % (sf, th))
-            axs[y,x].legend([p[0] for p in plots], type_vals)
-            
-            x += 1
-            
-        y += 1
+        axs[x].set_title('threads=%d' % th)
+        axs[x].legend([p[0] for p in plots], type_vals)
+        x += 1
 
     pp.savefig()
     pp.close()

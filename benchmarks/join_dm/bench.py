@@ -104,7 +104,7 @@ def args_factory(encoded):
 # Join the tables using Weld
 def join_weld(values, ty, threads, weld_conf):
     adaptive = ty == 'Adaptive' or ty == 'Lazy'
-    lazy = ty == 'lazy'
+    lazy = ty == 'Lazy'
     file_path = 'join_bf.weld' if ty == 'Bloom Filter' else 'join.weld'
     
     weld_code = None
