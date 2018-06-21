@@ -5,7 +5,7 @@ let S_ht = result(for(zip(S_sk,S_tk), groupmerger[i64,i64], |b,i,e| merge(b,e)))
 let T_ht = result(for(zip(T_tk,T_uk), groupmerger[i64,i64], |b,i,e| merge(b,e)));
 let U_ht = result(for(zip(U_uk,U_val), dictmerger[i64,i64,+], |b,i,e| merge(b,e)));
 
-let S_ht_bf = result(for(keys(S_ht),bloombuilder[i64],|b,i,e|merge(b,e)));
+let S_ht_bf = result(for(S_sk, bloombuilder[i64](len(S_sk)), |b,i,e| merge(b,e)));
 
 result(for(
     zip(R_rk,R_sk),
@@ -13,7 +13,7 @@ result(for(
     |b,i,r|
         let rk = r.$0;
         let sk = r.$1;
-        if (bfcontains(S_ht_bf, e)
+        if (bfcontains(S_ht_bf, sk),
             if (keyexists(S_ht, sk),
                 for (
                     lookup(S_ht, sk),

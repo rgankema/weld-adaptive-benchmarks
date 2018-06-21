@@ -1,4 +1,6 @@
-# SELECT SUM(a+b+c+d+z) FROM R,S,T,U WHERE R.a = S.a AND S.b = T.b AND t.c = U.d
+# SELECT SUM(a+b+c+d+z) 
+# FROM R,S,T,U 
+# WHERE R.a = S.a AND S.b = T.b AND t.c = U.d
 |R_rk:vec[i64],R_sk:vec[i64],S_sk:vec[i64],S_tk:vec[i64],T_tk:vec[i64],T_uk:vec[i64],U_uk:vec[i64],U_val:vec[i64]|
 
 let S_ht = result(for(zip(S_sk,S_tk), groupmerger[i64,i64], |b,i,e| merge(b,e)));
