@@ -1,3 +1,4 @@
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -13,30 +14,46 @@ import json
 from timeit import default_timer as timer
 from pprint import pprint
 import argparse
+import math
 
-# Create first column of data (only one that depends on selectivity)
-def generate_select_col(num_rows, selectivity):
-    hits = np.ones(int(selectivity * num_rows), dtype=np.int32) * 42
-    misses = np.ones(num_rows - len(hits), dtype=np.int32)
-    col = np.append(hits, misses)
-    np.random.shuffle(col)
-    return col
+# Create data
+def generate_data(n_R, hit_S):
+    n_S = int(math.ceil(0.2 * n_R))
+    S_b = np.arange(n_S, dtype='int64')
+    S_c = np.arange(n_S, dtype='int64')
 
-# Create remaining columns
-def generate_static_cols(num_rows):
-    data = {}
-    for i in range(2,7):
-        data['in%d' % i] = np.random.randint(0, 42, num_rows, dtype=np.int32)
+    R_b = np.random.choice(S_b, n_R, replace=True)
+    R_b[int(math.ceil(n_R*hit_S)):] += n_S
+    R_a = np.arange(n_R, dtype='int64')
 
-    return data
+    columns = [R_a, R_b, S_b, S_c]
+    for col in columns:
+        np.random.shuffle(col)
+    return columns
 
-# Returns an array of selectivity data 
-def selectivities(min, max, num_points):
-    return np.linspace(min, max, num_points)
-    arr = np.ones(num_points) - np.geomspace(min, max, num_points)
-    arr[0] = 1
-    arr = np.flip(arr, 0)
-    return arr
+# Perform the join in Python, check if hit ratios are accurate
+def join_python(R_a, R_b, S_b, S_c):
+    S_ht = {}
+    for (b, c) in zip(S_b, S_c):
+        S_ht[b] = c
+
+    aggregate = int(0)
+    s_hit = 0.0
+    s_try = 0.0
+    hits = 0
+    for (a, b) in zip(R_a, R_b):
+        c = S_ht.get(b)
+        s_try += 1.0
+        if (c != None):
+            s_hit += 1.0
+            hits += 1
+            aggregate += (a + b + c)
+    end = timer()
+
+    print("S hit ratio: " + (str(s_hit / s_try) if s_try > 0 else str(0)))
+    print("Hits: " + str(hits))
+
+    return aggregate
 
 # Create the args object for Weld
 def args_factory(encoded):
@@ -44,26 +61,20 @@ def args_factory(encoded):
         _fields_ = [e for e in encoded]
     return Args 
 
-# Perform the Weld operation
-def benchmark(data, type, threads, weld_conf):
-    adaptive = type == 'Adaptive'
-    lazy = False
-    code_path = None
-    if (type == 'Filter->Map1'):
-        code_path = 'filter_then_map.weld'
-    elif (type == 'Map->Filter'):
-        code_path = 'map_then_filter.weld'
-    else:
-        code_path = 'fused.weld'
-
+# Join the tables using Weld
+def join_weld(values, ty, threads, weld_conf):
+    adaptive = ty == 'Adaptive' or ty == 'Lazy'
+    lazy = ty == 'Lazy'
+    file_path = 'join_bf.weld' if ty == 'Bloom Filter' else 'join.weld'
+    
     weld_code = None
-    with open(code_path, 'r') as content_file:
+    with open(file_path, 'r') as content_file:
         weld_code = content_file.read()
 
     enc = NumpyArrayEncoder()
-    names = [c for c in sorted(data)]
-    argtypes = [enc.py_to_weld_type(data[c]).ctype_class for c in names]
-    encoded = [enc.encode(data[c]) for c in names]
+    names = ['R_a', 'R_b', 'S_b', 'S_c']
+    argtypes = [enc.py_to_weld_type(x).ctype_class for x in values]
+    encoded = [enc.encode(x) for x in values]
 
     Args = args_factory(zip(names, argtypes))
     weld_args = Args()
@@ -79,9 +90,7 @@ def benchmark(data, type, threads, weld_conf):
     conf.set("weld.optimization.applyAdaptiveTransforms", "true" if adaptive else "false")
     conf.set("weld.adaptive.lazyCompilation", "true" if lazy else "false")
     conf.set("weld.threads", str(threads))
-    conf.set("weld.memory.limit", "30000000000")
-    if type == 'Map->Filter' or type == 'Filter->Map1' or type == 'Filter->Map2':
-        conf.set('weld.optimization.passes', 'unroll-static-loop,infer-size,adapt-reorder-filter-projection,adapt-bloomfilter,adapt-predicate,short-circuit-booleans,predicate,vectorize,fix-iterate')
+    conf.set("weld.memory.limit", "20000000000")
     if weld_conf is not None:
         for key, val in weld_conf.iteritems():
             conf.set(key, val)
@@ -120,7 +129,7 @@ def benchmark(data, type, threads, weld_conf):
 if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description="Micro benchmark for adaptive filter map ordering"
+        description="Micro benchmark for adaptive joins"
     )
     parser.add_argument('-c', '--conf', type=str, required=True,
                         help="Path to configuration file")
@@ -137,28 +146,27 @@ if __name__ == '__main__':
     num_rows = conf['num_rows']
     sfs = conf['sf']
     num_iters = conf['num_iterations']
-    min_select = conf['min_select']
-    max_select = conf['max_select']
-    num_points = conf['num_points']
+    s_hits = conf['s_hit']
     types = conf['type']
     num_threads = conf['num_threads']
     weld_conf = conf.get('weld_conf')
 
-    # Start benchmark
-    total_iters = len(sfs) * num_points * len(num_threads) * len(types)
+    # Start benchmarking
+    total_iters = len(sfs) * len(s_hits) * len(types) * len(num_threads)
     iters = 1
     with open(out_path, 'w') as f:
-        f.write('type,n_rows,sf,selectivity,threads,comp_time,exec_time\n')
+        f.write('type,n_rows,sf,s_hit,threads,comp_time,exec_time\n')
         for sf in sfs:
-            data = generate_static_cols(num_rows * sf)
-            for select in selectivities(min_select, max_select, num_points):
-                data['in1'] = generate_select_col(num_rows * sf, select)
-                for th in num_threads:
-                    for ty in types:
-                        print('[%03d/%03d] %s, %d, %d, %.3f, %d' % (iters, total_iters, ty, num_rows, sf, select, th))
+            for s_hit in s_hits:
+                data = generate_data(num_rows * sf, s_hit)
+                expect = join_python(data[0], data[1], data[2], data[3])
+                for t in types:
+                    for threads in num_threads:
+                        print('[%03d/%03d] %s, %d, %d, %.3f, %d' % (iters, total_iters, t, num_rows, sf, s_hit, threads))
                         for i in range(num_iters):
-                            (result, comp_time, exec_time) = benchmark(data, ty, th, weld_conf)
-                            row = '%s,%d,%d,%f,%d,%f,%f\n'  % (ty, num_rows, sf, select, th, comp_time, exec_time)
+                            (result, comp_time, exec_time) = join_weld(data, t, threads, weld_conf)
+                            assert(result == expect)
+
+                            row = '%s,%d,%d,%f,%d,%f,%f\n'  % (t, num_rows, sf, s_hit, threads, comp_time, exec_time)
                             f.write(row)
                         iters += 1
-                            

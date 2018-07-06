@@ -1,0 +1,5 @@
+|in1:vec[i32],in2:vec[i32],in3:vec[i32],in4:vec[i32],in5:vec[i32],in6:vec[i32]|
+map(
+    filter(zip(in1,in2,in3,in4,in5,in6), |e| e.$0 == 42), 
+    |e| {e.$0 * e.$1 * e.$2 * e.$3 * e.$4, e.$1 * e.$2 * e.$3 * e.$4 * e.$5, e.$0 * e.$5 + e.$1 * e.$4}
+)

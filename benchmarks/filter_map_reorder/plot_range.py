@@ -12,7 +12,7 @@ def get_dataframe(path):
     df = pd.read_csv(path)
 
     def normalize_total_time(group):
-        group['norm_total_time'] = group.exec_time + group.comp_time.median()
+        group['norm_total_time'] = group.exec_time# + group.comp_time.median()
         return group
 
     df['total_time'] = df.comp_time + df.exec_time
@@ -21,7 +21,7 @@ def get_dataframe(path):
     return df
 
 # Plot the results and save to PDF
-def plot(df, pp):
+def plot(df, pp, outliers=False):
     type_vals = df.type.unique()
     thread_vals = df.threads.unique()
     sf_vals = df.sf.unique()
@@ -29,31 +29,41 @@ def plot(df, pp):
     w = len(thread_vals)
     h = len(sf_vals)
     fig, axs = plt.subplots(h, w, figsize=(8 * w, 8 * h))
+    axs
 
-    y = 0
-    for sf in sf_vals:
-        # Ensure that each row shares the same y-axis
-        max_time = df.loc[df.sf == sf].norm_total_time.max()
-        for x in range(w):
-            axs[y,x].set_ylim([0, max_time * 1.05])
-        x = 0
+    if h == 1:
+        axs = np.array([axs], dtype=np.object)
+    if w == 1:
+        new_axs = []
+        for ax in axs:
+            new_axs.append([ax])
+        axs = np.array(new_axs, dtype=np.object)
 
-        for th in thread_vals:
+
+    for y, sf in enumerate(sf_vals):
+        print y
+        # Set y-lim
+        if w > 1:
+            if outliers:
+                max_time = df.loc[df.sf == sf].norm_total_time.max()
+            else:
+                max_time = df.loc[df.sf == sf].groupby(['type', 'threads', 'selectivity']).median().reset_index().norm_total_time.max()
+            for x in range(w):
+                axs[y,x].set_ylim([0, max_time * 1.05])
+        
+        for x, th in enumerate(thread_vals):
+            print x
             plots = []
             for ty in type_vals:
                 g = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf].groupby('selectivity').median().reset_index()
                 z = df.loc[df.type == ty].loc[df.threads == th].loc[df.sf == sf]
 
-                plot = axs[y,x].errorbar(g.selectivity, g.norm_total_time)
+                plot = ax.errorbar(g.selectivity, g.norm_total_time)
                 axs[y,x].scatter(z.selectivity, z.norm_total_time, s=3)
                 plots.append(plot)
 
             axs[y,x].set_title('sf=%d, threads=%d' % (sf, th))
             axs[y,x].legend([p[0] for p in plots], type_vals)
-            
-            x += 1
-            
-        y += 1
 
     pp.savefig()
     pp.close()
@@ -67,11 +77,15 @@ if __name__ == '__main__':
                         help="Path to input file")
     parser.add_argument('-o', '--output', type=str, required=True,
                         help="Path to output file")
+    parser.add_argument('-s', '--show-outliers', required=False, action='store_true',
+                        help='Plot all outliers')
+                        
     cmdline_args = parser.parse_args()
     opt_dict = vars(cmdline_args)
     in_path = opt_dict['input']
     out_path = opt_dict['output']
+    show_outliers = opt_dict['show_outliers']
 
     pp = PdfPages(out_path)
     df = get_dataframe(in_path)
-    plot(df, pp)
+    plot(df, pp, show_outliers)

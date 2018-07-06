@@ -1,12 +1,12 @@
 {
     "num_rows": 10000000,
-    "sf": [1, 10, 50],
+    "sf": [1],
     "num_iterations": 5,
     "min_select": 0.0,
     "max_select": 1.0,
     "num_points": 21,
-    "type": ["Branch", "Select", "Adaptive"],
-    "num_threads": [1, 8],
+    "type": ["Branch", "Select"],
+    "num_threads": [1, 2],
     "weld_conf": {
         "weld.compile.dumpCode": "false",
         "weld.log.adaptive": "false",

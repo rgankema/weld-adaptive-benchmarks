@@ -1,0 +1,13 @@
+{
+    "num_rows": 10000000,
+    "sf": [1],
+    "num_iterations": 5,
+    "min_select": 0.01,
+    "max_select": 1.0,
+    "num_points": 21,
+    "type": ["Filter->Map1", "Filter->Map2", "Map->Filter", "Fused"],
+    "num_threads": [1],
+    "weld_conf": {
+        "weld.compile.dumpCode": "false"
+    }
+}

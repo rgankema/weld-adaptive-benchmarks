@@ -103,7 +103,7 @@ def args_factory(encoded):
 
 # Join the tables using Weld
 def join_weld(values, ty, threads, weld_conf):
-    file_path = '%s.weld' % ty
+    file_path = '%s.weld' % ty if ty != 'join_gm_no_par' else 'join_gm.weld'
     weld_code = None
     with open(file_path, 'r') as content_file:
         weld_code = content_file.read()
@@ -124,6 +124,7 @@ def join_weld(values, ty, threads, weld_conf):
     # Compile the module
     err = cweld.WeldError()
     conf = cweld.WeldConf()
+    conf.set("weld.compile.parallelNestedLoops", "false" if ty == 'join_gm_no_par' else "true")
     conf.set("weld.optimization.applyAdaptiveTransforms", "false")
     conf.set("weld.adaptive.lazyCompilation", "false")
     conf.set("weld.threads", str(threads))

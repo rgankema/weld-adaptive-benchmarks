@@ -1,0 +1,13 @@
+{
+    "num_rows": 1000000,
+    "sf": [1],
+    "num_iterations": 10,
+    "min_select": 1.0,
+    "max_select": 1.0,
+    "num_points": 1,
+    "type": ["Filter->Map", "Map->Filter"],
+    "num_threads": [1],
+    "weld_conf": {
+        "weld.log.profile": "true"
+    }
+}

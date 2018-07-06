@@ -1,5 +1,27 @@
 |in1:vec[i32],in2:vec[i32],in3:vec[i32],in4:vec[i32],in5:vec[i32],in6:vec[i32]|
+let blds = for(
+    zip(in1,in2,in3,in4,in5,in6),
+    {appender[i32],appender[i32],appender[i32],appender[i32],appender[i32],appender[i32]},
+    |b,i,e| if(e.$0 == 42,
+        {
+            merge(b.$0, e.$0),
+            merge(b.$1, e.$1),
+            merge(b.$2, e.$2),
+            merge(b.$3, e.$3),
+            merge(b.$4, e.$4),
+            merge(b.$5, e.$5)
+        },
+        b
+    )
+);
 map(
-    filter(zip(in1,in2,in3,in4,in5,in6), |e| e.$0 == 42), 
+    zip(
+        result(blds.$0),
+        result(blds.$1),
+        result(blds.$2),
+        result(blds.$3),
+        result(blds.$4),
+        result(blds.$5)
+    ), 
     |e| {e.$0 * e.$1 * e.$2 * e.$3 * e.$4, e.$1 * e.$2 * e.$3 * e.$4 * e.$5, e.$0 * e.$5 + e.$1 * e.$4}
 )

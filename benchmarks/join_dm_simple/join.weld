@@ -1,0 +1,19 @@
+# SELECT SUM(a+b+c+d+z) 
+# FROM R,S
+# WHERE R.y = S.y
+|R_x:vec[i64],R_y:vec[i64],S_y:vec[i64],S_z:vec[i64]|
+
+let S_ht = result(for(zip(S_y,S_z), dictmerger[i64,i64,+], |b,i,e| merge(b,e)));
+
+result(for(
+    zip(R_x,R_y),
+    merger[i64,+],
+    |b,i,e|
+        let x = e.$0;
+        let y = e.$1;
+        if (keyexists(S_ht, y),
+            let z = lookup(S_ht, y);
+            merge(b, x+y+z),
+            b
+        )
+))
