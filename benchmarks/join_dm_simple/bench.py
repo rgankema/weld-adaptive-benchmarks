@@ -17,8 +17,8 @@ import argparse
 import math
 
 # Create data
-def generate_data(n_R, hit_S):
-    n_S = int(math.ceil(0.2 * n_R))
+def generate_data(n_R, s_to_r, hit_S):
+    n_S = int(math.ceil(s_to_r * n_R))
     S_b = np.arange(n_S, dtype='int64')
     S_c = np.arange(n_S, dtype='int64')
 
@@ -46,12 +46,8 @@ def join_python(R_a, R_b, S_b, S_c):
         s_try += 1.0
         if (c != None):
             s_hit += 1.0
-            hits += 1
             aggregate += (a + b + c)
     end = timer()
-
-    print("S hit ratio: " + (str(s_hit / s_try) if s_try > 0 else str(0)))
-    print("Hits: " + str(hits))
 
     return aggregate
 
@@ -147,26 +143,28 @@ if __name__ == '__main__':
     sfs = conf['sf']
     num_iters = conf['num_iterations']
     s_hits = conf['s_hit']
+    s_to_rs = conf['s_to_r']
     types = conf['type']
     num_threads = conf['num_threads']
     weld_conf = conf.get('weld_conf')
 
     # Start benchmarking
-    total_iters = len(sfs) * len(s_hits) * len(types) * len(num_threads)
+    total_iters = len(sfs) * len(s_hits) * len(types) * len(num_threads) * len(s_to_rs)
     iters = 1
     with open(out_path, 'w') as f:
-        f.write('type,n_rows,sf,s_hit,threads,comp_time,exec_time\n')
+        f.write('type,n_rows,sf,s_to_r,s_hit,threads,comp_time,exec_time\n')
         for sf in sfs:
-            for s_hit in s_hits:
-                data = generate_data(num_rows * sf, s_hit)
-                expect = join_python(data[0], data[1], data[2], data[3])
-                for t in types:
-                    for threads in num_threads:
-                        print('[%03d/%03d] %s, %d, %d, %.3f, %d' % (iters, total_iters, t, num_rows, sf, s_hit, threads))
-                        for i in range(num_iters):
-                            (result, comp_time, exec_time) = join_weld(data, t, threads, weld_conf)
-                            assert(result == expect)
+            for s_to_r in s_to_rs:
+                for s_hit in s_hits:
+                    data = generate_data(num_rows * sf, s_to_r, s_hit)
+                    expect = join_python(data[0], data[1], data[2], data[3])
+                    for t in types:
+                        for threads in num_threads:
+                            print('[%03d/%03d] %s, %d, %d, %.3f, %.3f, %d' % (iters, total_iters, t, num_rows, sf, s_to_r, s_hit, threads))
+                            for i in range(num_iters):
+                                (result, comp_time, exec_time) = join_weld(data, t, threads, weld_conf)
+                                assert(result == expect)
 
-                            row = '%s,%d,%d,%f,%d,%f,%f\n'  % (t, num_rows, sf, s_hit, threads, comp_time, exec_time)
-                            f.write(row)
-                        iters += 1
+                                row = '%s,%d,%d,%f,%f,%d,%f,%f\n'  % (t, num_rows, sf, s_to_r, s_hit, threads, comp_time, exec_time)
+                                f.write(row)
+                            iters += 1
