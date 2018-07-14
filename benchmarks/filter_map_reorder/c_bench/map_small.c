@@ -3,19 +3,19 @@
 #include <string.h>
 #include <stdio.h>
 
-static inline void work(uint64_t N, int32_t * __restrict out1,
-        int32_t * __restrict out2, int32_t * __restrict out3, 
-        int32_t * __restrict in1, int32_t * __restrict in2,
-        int32_t * __restrict in3, int32_t * __restrict in4,
-        int32_t * __restrict in5, int32_t * __restrict in6) {
+static inline void work(uint64_t N, int16_t * __restrict out1,
+        int16_t * __restrict out2, int16_t * __restrict out3, 
+        int16_t * __restrict in1, int16_t * __restrict in2,
+        int16_t * __restrict in3, int16_t * __restrict in4,
+        int16_t * __restrict in5, int16_t * __restrict in6) {
                     
     for (int64_t i = 0; i < N; i++) {
-        int32_t e0 = in1[i];
-        int32_t e1 = in2[i];
-        int32_t e2 = in3[i];
-        int32_t e3 = in4[i];
-        int32_t e4 = in5[i];
-        int32_t e5 = in6[i];
+        int16_t e0 = in1[i];
+        int16_t e1 = in2[i];
+        int16_t e2 = in3[i];
+        int16_t e3 = in4[i];
+        int16_t e4 = in5[i];
+        int16_t e5 = in6[i];
         out1[i] = e0 * e1 * e2 * e3 * e4;
         out2[i] = e1 * e2 * e3 * e4 * e5;
         out3[i] = e0 * e5 + e1 * e4;
@@ -30,12 +30,12 @@ static inline uint64_t get_cycles() {
 
 int32_t main(int argc, char** argv) {
     uint64_t iters = atoi(argv[1]), N = atoi(argv[2]);
-    int32_t *in1 = (int32_t*)malloc(sizeof(int32_t) * N);
-    int32_t *in2 = (int32_t*)malloc(sizeof(int32_t) * N);
-    int32_t *in3 = (int32_t*)malloc(sizeof(int32_t) * N);
-    int32_t *in4 = (int32_t*)malloc(sizeof(int32_t) * N);
-    int32_t *in5 = (int32_t*)malloc(sizeof(int32_t) * N);
-    int32_t *in6 = (int32_t*)malloc(sizeof(int32_t) * N);
+    int16_t *in1 = (int16_t*)malloc(sizeof(int16_t) * N);
+    int16_t *in2 = (int16_t*)malloc(sizeof(int16_t) * N);
+    int16_t *in3 = (int16_t*)malloc(sizeof(int16_t) * N);
+    int16_t *in4 = (int16_t*)malloc(sizeof(int16_t) * N);
+    int16_t *in5 = (int16_t*)malloc(sizeof(int16_t) * N);
+    int16_t *in6 = (int16_t*)malloc(sizeof(int16_t) * N);
     int32_t res = 0;
 
     for (int32_t i = 0; i < N; i++) {
@@ -47,9 +47,9 @@ int32_t main(int argc, char** argv) {
         in6[i] = rand() % 42;
     }
 
-    int32_t *out1 = (int32_t*)malloc(sizeof(int32_t) * N);
-    int32_t *out2 = (int32_t*)malloc(sizeof(int32_t) * N);
-    int32_t *out3 = (int32_t*)malloc(sizeof(int32_t) * N);
+    int16_t *out1 = (int16_t*)malloc(sizeof(int16_t) * N);
+    int16_t *out2 = (int16_t*)malloc(sizeof(int16_t) * N);
+    int16_t *out3 = (int16_t*)malloc(sizeof(int16_t) * N);
 
     uint64_t total_cycles = 0;
     for (int32_t i = 0; i < iters; i++) {
