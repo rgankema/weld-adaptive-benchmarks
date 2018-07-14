@@ -1,0 +1,24 @@
+|x:vec[f32],y:vec[f32]|
+let sw_bld = appender[f32];
+result(switchfor(
+    |lb,ub|
+        for(
+            zip(x,y),
+            sw_bld,
+            |b,i,e|
+                if (e.$0 > e.$1, 
+                    merge(b, exp(e.$0) / log(e.$1)), 
+                    merge(b, exp(e.$1) / log(e.$0))
+                )
+        ),
+    |lb,ub|
+        for(
+            zip(x,y),
+            sw_bld,
+            |b,i,e| 
+                if (e.$0 > e.$1, 
+                    merge(b, exp(e.$0) / log(e.$1)), 
+                    merge(b, exp(e.$1) / log(e.$0))
+                )
+        )
+))

@@ -5,7 +5,7 @@
     "min_select": 0.0,
     "max_select": 1.0,
     "num_points": 11,
-    "type": ["Filter->Map", "Map->Filter", "Adaptive"],
+    "type": ["Fused", "Map->Filter", "Adaptive"],
     "num_threads": [1, 8],
     "weld_conf": {
         "weld.compile.dumpCode": "false"

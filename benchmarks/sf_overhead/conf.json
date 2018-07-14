@@ -1,0 +1,10 @@
+{
+    "num_rows": 1000000,
+    "sf": [1, 10, 50, 100, 500],
+    "num_iterations": 5,
+    "type": ["normal", "switchfor"],
+    "num_threads": [1, 2, 4, 8],
+    "weld_conf": {
+        "weld.log.profile": "true"
+    }
+}

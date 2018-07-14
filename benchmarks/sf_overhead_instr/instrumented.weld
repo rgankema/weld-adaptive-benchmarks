@@ -1,0 +1,16 @@
+@(run_vars: @try=0.0; @T=0.0; @F=0.0)
+|x:vec[f32],y:vec[f32]|
+@(defered_until: @try > @T + @ F)
+let def = 1;
+result(@(grain_size:16384)for(
+    zip(x,y),
+    appender[f32],
+    |b,i,e|
+        @(count_calls: @try)
+        if (e.$0 > e.$1,
+            @(count_calls: @T)
+            merge(b, e.$0 * e.$1),
+            @(count_calls: @F)
+            merge(b, e.$1 * e.$0)
+        )
+))

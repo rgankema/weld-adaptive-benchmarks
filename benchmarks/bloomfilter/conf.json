@@ -1,0 +1,12 @@
+{
+    "n_total": 1000000,
+    "sf": [1, 10, 50],
+    "num_iters": 5,
+    "f_unique": [0.5],
+    "type": ["baseline", "normal_insert", "batch_insert"],
+    "num_threads": [1],
+    "weld_conf": {
+        "weld.compile.dumpCode": "false",
+        "weld.compile.traceExecution": "false"
+    }
+}

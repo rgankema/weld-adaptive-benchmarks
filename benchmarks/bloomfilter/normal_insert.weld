@@ -1,0 +1,9 @@
+|x:vec[i64]|
+let d = result(for(
+    x, dictmerger[i64,i64,+], |b,i,e| merge(b,{e,e})
+));
+let k = keys(d);
+let bf = result(for(
+    k, bloombuilder[i64](len(k)), |b,i,e| merge(b, e)
+));
+i64(bfcontains(bf, lookup(x, 0L)))

@@ -13,6 +13,8 @@ import json
 from timeit import default_timer as timer
 from pprint import pprint
 import argparse
+import glob
+import shutil
 
 # Create first column of data (only one that depends on selectivity)
 def generate_select_col(num_rows, selectivity):
@@ -160,5 +162,11 @@ if __name__ == '__main__':
                             (result, comp_time, exec_time) = benchmark(data, ty, th, weld_conf)
                             row = '%s,%d,%d,%f,%d,%f,%f\n'  % (ty, num_rows, sf, select, th, comp_time, exec_time)
                             f.write(row)
+
+                            # Move profiling stuff if exists
+                            if weld_conf is not None and weld_conf.get('weld.log.profile') == 'true':
+                                for file in glob.glob(r'profile*.csv'):
+                                    select_str = str(select).replace('.', ',')
+                                    shutil.move(file, 'profile-%s_%d_%d_%s_%d_%d.csv' % (ty, num_rows, sf, select_str, th, i))
                         iters += 1
                             

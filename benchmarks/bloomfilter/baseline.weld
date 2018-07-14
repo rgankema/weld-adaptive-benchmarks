@@ -1,0 +1,5 @@
+|x:vec[i64]|
+let d = result(for(
+    x, dictmerger[i64,i64,+], |b,i,e| merge(b,{e,e})
+));
+i64(keyexists(d, lookup(x, 0L)))

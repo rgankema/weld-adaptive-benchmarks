@@ -1,0 +1,10 @@
+|x:vec[f32],y:vec[f32]|
+result(@(grain_size:16384)for(
+    zip(x,y),
+    appender[f32],
+    |b,i,e|
+        if (e.$0 > e.$1, 
+            merge(b, e.$0 / e.$1), 
+            merge(b, e.$1 / e.$0)
+        )
+))
