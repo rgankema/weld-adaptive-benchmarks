@@ -62,6 +62,7 @@ def benchmark(data, type, threads, weld_conf):
     # Compile the module
     err = cweld.WeldError()
     conf = cweld.WeldConf()
+    conf.set('weld.optimization.passes', 'unroll-static-loop,infer-size,adapt-predicate,short-circuit-booleans,predicate,vectorize,fix-iterate')
     conf.set("weld.optimization.applyAdaptiveTransforms", "true" if adaptive else "false")
     conf.set("weld.adaptive.lazyCompilation", "true" if lazy else "false")
     conf.set("weld.threads", str(threads))
