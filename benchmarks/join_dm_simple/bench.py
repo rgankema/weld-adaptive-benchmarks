@@ -15,6 +15,8 @@ from timeit import default_timer as timer
 from pprint import pprint
 import argparse
 import math
+import glob 
+import shutil
 
 # Create data
 def generate_data(n_R, s_to_r, hit_S):
@@ -168,3 +170,12 @@ if __name__ == '__main__':
                                 row = '%s,%d,%d,%f,%f,%d,%f,%f\n'  % (t, num_rows, sf, s_to_r, s_hit, threads, comp_time, exec_time)
                                 f.write(row)
                             iters += 1
+
+                            # Move profiling stuff if exists
+                            if weld_conf is not None and weld_conf.get('weld.log.profile') == 'true':
+                                for file in glob.glob(r'profile-*.csv'):
+                                    s_to_r_str = ("%.3g" % s_to_r).replace('.', '')
+                                    s_hit_str = ("%.3g" % s_hit).replace('.', '')
+                                    shutil.move(file, 'prof-%s_%d_%d_%s_%s_%d_%d.csv' % (t, num_rows, sf, s_to_r, s_hit, threads, i))
+
+                                    
