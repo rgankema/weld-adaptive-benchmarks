@@ -137,6 +137,6 @@ if __name__ == '__main__':
 
                         # Move profiling stuff if exists
                         if weld_conf is not None and weld_conf.get('weld.log.profile') == 'true':
-                            for file in glob.glob(r'profile*.csv'):
-                                shutil.move(file, 'profile-%s_%d_%d_%d_%d.csv' % (t, num_rows, sf, threads, i))
+                            for file in glob.glob(r'profile-*.csv'):
+                                shutil.move(file, 'prof-%s_%d_%d_%d_%d.csv' % (t, num_rows, sf, threads, i))
                     iters += 1
