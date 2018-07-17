@@ -1,11 +1,17 @@
 # SELECT SUM(a+b+c+d+z) FROM R,S,T,U WHERE R.a = S.a AND S.b = T.b AND t.c = U.d
 |R_rk:vec[i64],R_sk:vec[i64],S_sk:vec[i64],S_tk:vec[i64],T_tk:vec[i64],T_uk:vec[i64],U_uk:vec[i64],U_val:vec[i64]|
 
+let S_blds = for(
+    zip(S_sk,S_tk),
+    {groupmerger[i64,i64], bloombuilder[i64](len(S_sk))},
+    |bs,i,e| {merge(bs.$0, e), merge(bs.$1, e.$0)}
+);
+let S_ht = result(S_blds.$0);
+let S_ht_bf = result(S_blds.$1);
+
 let S_ht = result(for(zip(S_sk,S_tk), groupmerger[i64,i64], |b,i,e| merge(b,e)));
 let T_ht = result(for(zip(T_tk,T_uk), groupmerger[i64,i64], |b,i,e| merge(b,e)));
 let U_ht = result(for(zip(U_uk,U_val), dictmerger[i64,i64,+], |b,i,e| merge(b,e)));
-
-let S_ht_bf = result(for(S_sk, bloombuilder[i64](len(S_sk)), |b,i,e| merge(b,e)));
 
 result(for(
     zip(R_rk,R_sk),
