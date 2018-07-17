@@ -1,0 +1,10 @@
+|x:vec[i64]|
+let blds = for(
+    x, 
+    {dictmerger[i64,i64,+], bloombuilder[i64](len(x))},
+    |b,i,e| 
+        {merge(b.$0, {e,e}), merge(b.$1, e)}
+);
+let d = result(blds.$0);
+let bf = result(blds.$1);
+i64(bfcontains(bf, lookup(x, 0L))) + i64(keyexists(d, lookup(x, 0L)))
