@@ -2,6 +2,7 @@
     "num_rows": 1000000,
     "sf": [1, 10, 30],
     "num_iterations": 5,
+    "s_to_r": [0.4, 0.05],
     "s_hit": [0.001, 0.01, 0.05, 0.1, 0.15, 0.19, 0.21, 0.3, 0.5, 0.6, 0.7, 0.8, 1.0],
     "type": ["Normal", "Bloom Filter", "Adaptive", "Lazy"],
     "num_threads": [1, 2, 8],
